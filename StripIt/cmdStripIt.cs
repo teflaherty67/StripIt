@@ -25,22 +25,15 @@ namespace StripIt
             uidoc.ActiveView = curView;
 
             // 02. create list of all sheets
-            FilteredElementCollector colSheets = new FilteredElementCollector(curDoc)
-                .OfCategory(BuiltInCategory.OST_Sheets)
-                .WhereElementIsNotElementType();
+            List<ViewSheet> allSheets = Utils.GetAllSheets(curDoc);
 
-            List<ViewSheet> listSheets = new List<ViewSheet>();
-            foreach (ViewSheet x in colSheets.ToElements())
-            {
-                listSheets.Add(x);
-            }
-
+            // 03. create & start transaction
             using (Transaction t = new Transaction(curDoc))
             {
                 t.Start("Strip the file");
 
                 // 02a. delete all sheets
-                foreach(ViewSheet curSheet in listSheets)
+                foreach(ViewSheet curSheet in allSheets)
                 {
                     curDoc.Delete(curSheet.Id);
                 }

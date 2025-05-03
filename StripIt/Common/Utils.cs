@@ -1,5 +1,6 @@
 ﻿
 
+
 namespace StripIt
 { 
     internal static class Utils
@@ -56,6 +57,21 @@ namespace StripIt
             }
 
             return m_views;
+        }
+
+        internal static List<ViewSheet> GetAllSheets(Document curDoc)
+        {
+            //get all sheets
+            FilteredElementCollector m_colViews = new FilteredElementCollector(curDoc);
+            m_colViews.OfCategory(BuiltInCategory.OST_Sheets);
+
+            List<ViewSheet> m_sheets = new List<ViewSheet>();
+            foreach (ViewSheet x in m_colViews.ToElements())
+            {
+                m_sheets.Add(x);
+            }
+
+            return m_sheets;
         }
     }
 }
