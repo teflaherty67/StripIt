@@ -1,6 +1,8 @@
 ﻿
 
 
+
+
 namespace StripIt
 { 
     internal static class Utils
@@ -72,6 +74,81 @@ namespace StripIt
             }
 
             return m_sheets;
+        }
+
+        internal static List<View> GetAllViewsByCategoryContains(Document curDoc, string catName)
+        {
+            List<View> m_colViews = GetAllViewsByCategory(curDoc, catName);
+
+            List<View> m_returnList = new List<View>();
+
+            foreach (View curView in m_colViews)
+            {
+                string viewCat = GetParameterValueByName(curView, "Category");
+
+                if (viewCat.Contains(catName))
+                    m_returnList.Add(curView);
+            }
+
+            return m_returnList;
+        }
+
+        internal static List<View> GetAllViewsByCategoryAndViewTemplate(Document curDoc, string catName, string vtName)
+        {
+            List<View> m_colViews = GetAllViewsByCategory(curDoc, catName);
+
+            List<View> m_returnList = new List<View>();
+
+            foreach (View curView in m_colViews)
+            {
+                ElementId vtId = curView.ViewTemplateId;
+
+                if (vtId != ElementId.InvalidElementId)
+                {
+                    View vt = curDoc.GetElement(vtId) as View;
+
+                    if (vt.Name == vtName)
+                        m_returnList.Add(curView);
+                }
+            }
+
+            return m_returnList;
+        }
+
+        internal static List<View> GetAllViewsByCategory(Document curDoc, string catName)
+        {
+            List<View> m_colViews = GetAllViews(curDoc);
+
+            List<View> m_returnList = new List<View>();
+
+            foreach (View curView in m_colViews)
+            {
+                string viewCat = GetParameterValueByName(curView, "Category");
+
+                if (viewCat == catName)
+                    m_returnList.Add(curView);
+            }
+
+            return m_returnList;
+        }
+
+        private static string GetParameterValueByName(Element elem, string paramName)
+        {
+            IList<Parameter> m_paramList = elem.GetParameters(paramName);
+
+            if (m_paramList != null)
+                try
+                {
+                    Parameter param = m_paramList[0];
+                    string paramValue = param.AsValueString();
+                    return paramValue;
+                }
+                catch (System.ArgumentOutOfRangeException)
+                {
+                    return null;
+                }
+
+            return "";
         }
     }
 }

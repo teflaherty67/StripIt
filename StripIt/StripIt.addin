@@ -13,7 +13,7 @@
     <Text>StripIt - Command 2</Text>
     <Description>Some description</Description>
     <Assembly>StripIt\StripIt.dll</Assembly>
-    <FullClassName>StripIt.Command2</FullClassName>
+    <FullClassName>StripIt.cmdDefaultView</FullClassName>
     <ClientId>49085656-c436-491f-91ac-5de66ab4b9b9</ClientId>
     <VendorId>com.YOUR COMPANY NAME</VendorId>
     <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>

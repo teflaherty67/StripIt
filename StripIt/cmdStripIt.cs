@@ -1,4 +1,5 @@
-﻿using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
+﻿using System.Windows.Controls;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace StripIt
 {
@@ -15,19 +16,49 @@ namespace StripIt
             string userName = uiapp.Application.Username;
 
             // 01. set the active view to Elevation A 3D view
-            View curView;
+            View newView;
 
             if (curDoc.IsWorkshared == true)
-                curView = Utils.GetViewByName(curDoc, "A - " + userName);
+                newView = Utils.GetViewByName(curDoc, "A - " + userName);
             else
-                curView = Utils.GetViewByName(curDoc, "A");
+                newView = Utils.GetViewByName(curDoc, "A");
 
-            uidoc.ActiveView = curView;
+            uidoc.ActiveView = newView;
 
             // 02. create list of all sheets
             List<ViewSheet> allSheets = Utils.GetAllSheets(curDoc);
 
-            // 03. create & start transaction
+            // 03. create list of views to delete
+            List<View> viewsToDelete = new List<View>();
+
+            // get all the views in the project by category
+            List<View> listViews = new List<View>();
+            List<View> listCat01 = Utils.GetAllViewsByCategoryContains(curDoc, "Floor Plans");
+            List<View> listCat02 = Utils.GetAllViewsByCategoryContains(curDoc, "Elevations");
+            List<View> listCat03 = Utils.GetAllViewsByCategoryContains(curDoc, "Roof Plans");
+            List<View> listCat04 = Utils.GetAllViewsByCategoryContains(curDoc, "Sections");
+            List<View> listCat05 = Utils.GetAllViewsByCategoryContains(curDoc, "Interior Elevations");
+            List<View> listCat06 = Utils.GetAllViewsByCategoryContains(curDoc, "Electrical Plans");
+            List<View> listCat07 = Utils.GetAllViewsByCategoryContains(curDoc, "Form/Foundation Plans");
+            List<View> listCat08 = Utils.GetAllViewsByCategoryContains(curDoc, "Ceiling Framing Plans");
+            List<View> listCat09 = Utils.GetAllViewsByCategoryContains(curDoc, "Roof Framing Plans");
+            List<View> listCat14 = Utils.GetAllViewsByCategoryContains(curDoc, "Ceiling Views");
+            List<View> listCat16 = Utils.GetAllViewsByCategoryAndViewTemplate(curDoc, "16:3D Views", "16-3D Frame");
+
+            // combine the lists together
+            listViews.AddRange(listCat01);
+            listViews.AddRange(listCat02);
+            listViews.AddRange(listCat03);
+            listViews.AddRange(listCat04);
+            listViews.AddRange(listCat05);
+            listViews.AddRange(listCat06);
+            listViews.AddRange(listCat07);
+            listViews.AddRange(listCat08);
+            listViews.AddRange(listCat09);
+            listViews.AddRange(listCat14);
+            listViews.AddRange(listCat16);
+
+            // 04. create & start transaction
             using (Transaction t = new Transaction(curDoc))
             {
                 t.Start("Strip the file");
@@ -36,6 +67,12 @@ namespace StripIt
                 foreach(ViewSheet curSheet in allSheets)
                 {
                     curDoc.Delete(curSheet.Id);
+                }
+
+                // 03a. delete views
+                foreach(View curView in listViews)
+                {
+                    curDoc.Delete(curView.Id);
                 }
 
                 t.Commit();
