@@ -124,9 +124,13 @@ namespace StripIt
             foreach (View curView in m_colViews)
             {
                 string viewCat = GetParameterValueByName(curView, "Category");
+                if (!string.IsNullOrEmpty(viewCat))
 
-                if (viewCat == catName)
-                    m_returnList.Add(curView);
+                {
+                    if (viewCat.Contains(catName))
+                        m_returnList.Add(curView);
+                }
+
             }
 
             return m_returnList;

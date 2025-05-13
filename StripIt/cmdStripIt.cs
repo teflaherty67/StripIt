@@ -83,15 +83,11 @@ namespace StripIt
                 // loop through the views
                 foreach (View curView in listViews)
                 {
-                    // check if view is already on sheet
-                    if(Viewport.CanAddViewToSheet(curDoc, colSheets.FirstElementId(), curView.Id))
+                    // check if view has dependent views
+                    if (curView.GetDependentViewIds().Count() == 0)
                     {
-                        // check if view has dependent views
-                        if (curView.GetDependentViewIds().Count() == 0)
-                        {
-                            // add view to list of views to delete
-                            viewsToDelete.Add(curView);
-                        }
+                        // add view to list of views to delete
+                        viewsToDelete.Add(curView);
                     }
                 }
 
