@@ -14,6 +14,22 @@ namespace StripIt
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document curDoc = uidoc.Document;
 
+            ViewFamilyType viewFamilyType = new FilteredElementCollector(curDoc)
+                .OfClass(typeof(ViewFamilyType))
+                .Cast<ViewFamilyType>()
+                .FirstOrDefault(vft => vft.ViewFamily == ViewFamily.ThreeDimensional);
+
+            if (viewFamilyType == null)
+                throw new InvalidOperationException("No 3D view family type found.");
+
+
+
+
+
+
+
+
+
             string userName = uiapp.Application.Username;
 
             // 01. set the active view to Elevation A 3D view
