@@ -18,6 +18,15 @@
     <VendorId>com.YOUR COMPANY NAME</VendorId>
     <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
   </AddIn>
+  <AddIn Type="Command">
+    <Text>StripIt - Command 3</Text>
+    <Description>Some description</Description>
+    <Assembly>StripIt\StripIt.dll</Assembly>
+    <FullClassName>StripIt.cmdStripIt2</FullClassName>
+    <ClientId>CA41B04A-3DC3-4794-88D0-3E1B7694082E</ClientId>
+    <VendorId>com.YOUR COMPANY NAME</VendorId>
+    <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
+  </AddIn>
   <AddIn Type="Application">
     <Name>StripIt</Name>
     <Assembly>StripIt\StripIt.dll</Assembly>

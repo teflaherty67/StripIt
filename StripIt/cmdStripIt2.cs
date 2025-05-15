@@ -1,11 +1,10 @@
-﻿using StripIt;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement.StartPanel;
 
 namespace StripIt
 {
     [Transaction(TransactionMode.Manual)]
-    public class cmdStripIt : IExternalCommand
+    public class cmdStripIt2 : IExternalCommand
     {
         public Result Execute(ExternalCommandData commandData, ref string message, ElementSet elements)
         {
@@ -27,27 +26,7 @@ namespace StripIt
             uidoc.ActiveView = newView;
 
             // 02. create list of all sheets
-            List<ViewSheet> allSheets = Utils.GetAllSheets(curDoc);
-
-            // 03. create view lists
-
-            // create list of all views
-            List<View> allViews = Utils.GetAllViews(curDoc);
-
-            // create list of views to keep
-            List<View> viewsToKeep = Utils.GetAllViewsByCategoryContains(curDoc, "Presentation Views");
-
-            // create list of ElementIds from viewsToKeep for fast lookup
-            List<ElementId> viewsToKeepIds = new List<ElementId>(viewsToKeep.Select(view => view.Id));
-
-            // create the filtered list using the ElementId for comparison
-            List<View> viewsToDelete = allViews.Where(view => !viewsToKeepIds.Contains(view.Id)).ToList();
-
-            // 04. create list of all schedules
-            List<ViewSchedule> allSchedules = Utils.GetAllSchedules(curDoc);
-
-            // 05. get Revit Command Id for Purge
-            RevitCommandId commandId = RevitCommandId.LookupPostableCommandId(PostableCommand.PurgeUnused);
+            List<ViewSheet> allSheets = Utils.GetAllSheets(curDoc);            
 
             // 04. create & start transaction
             using (Transaction t = new Transaction(curDoc))
@@ -60,7 +39,40 @@ namespace StripIt
                     curDoc.Delete(curSheet.Id);
                 }
 
-                // 03a. loop through the views & delete them
+                // 03. create view lists
+
+                // Assuming allViews and viewsToKeep are both lists of Revit View objects
+                List<View> allViews = Utils.GetAllViews(curDoc);
+                List<View> viewsToKeep = Utils.GetAllViewsByCategoryContains(curDoc, "Presentation Views");
+
+                // Create a HashSet of ElementIds from viewsToKeep for fast lookup
+                List<ElementId> viewsToKeepIds = new List<ElementId>(viewsToKeep.Select(view => view.Id));
+
+                // Create the filtered list using the ElementId for comparison
+                List<View> viewsToDelete = allViews.Where(view => !viewsToKeepIds.Contains(view.Id)).ToList();
+
+                //List<View> allViews = Utils.GetAllViews(curDoc);
+
+                //List<View> viewsToKeep = Utils.GetAllViewsByCategoryContains(curDoc, "Presentation Views");
+
+                //List<View> viewsToDelete = allViews.Where(view => !viewsToKeep.Contains(view)).ToList();
+
+
+                //int counter = 2;
+
+                //while (counter > 0)
+                //{
+                //    // loop through the views
+                //    foreach (View curView in listViews)
+                //    {
+                //        // check if view has dependent views
+                //        if (curView.GetDependentViewIds().Count() == 0)
+                //        {
+                //            // add view to list of views to delete
+                //            viewsToDelete.Add(curView);
+                //        }
+                //    }
+
                 foreach (View deleteView in viewsToDelete)
                     {
                         try
@@ -73,15 +85,9 @@ namespace StripIt
                         }
                     }
 
-                // 04a. loop through the schedules & delete them
+                //    counter--;
+                //}              
 
-                foreach (ViewSchedule deleteSched in allSchedules)
-                    {
-                        curDoc.Delete(deleteSched.Id);
-                    }
-
-                // run the Purge Unused command using PostCommand
-                uiapp.PostCommand(commandId);
 
                 t.Commit();
             }
@@ -105,4 +111,7 @@ namespace StripIt
             return myButtonData.Data;
         }
     }
+
 }
+
+

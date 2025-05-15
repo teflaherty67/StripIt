@@ -136,6 +136,32 @@ namespace StripIt
             return m_returnList;
         }
 
+        internal static List<ViewSchedule> GetAllSchedules(Document curDoc)
+        {
+            List<ViewSchedule> m_schedList = new List<ViewSchedule>();
+
+            FilteredElementCollector curCollector = new FilteredElementCollector(curDoc);
+            curCollector.OfClass(typeof(ViewSchedule));
+            curCollector.WhereElementIsNotElementType();
+
+            //loop through views and check if schedule - if so then put into schedule list
+            foreach (ViewSchedule curView in curCollector)
+            {
+                if (curView.ViewType == ViewType.Schedule)
+                {
+                    if (curView.IsTemplate == false)
+                    {
+                        if (curView.Name.Contains("<") && curView.Name.Contains(">"))
+                            continue;
+                        else
+                            m_schedList.Add((ViewSchedule)curView);
+                    }
+                }
+            }
+
+            return m_schedList;
+        }
+
         private static string GetParameterValueByName(Element elem, string paramName)
         {
             IList<Parameter> m_paramList = elem.GetParameters(paramName);

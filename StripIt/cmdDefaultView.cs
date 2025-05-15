@@ -28,7 +28,7 @@ namespace StripIt
                 View3D view3D = View3D.CreateIsometric(curDoc, viewFamilyType.Id);
 
                 // Set the name to "{3D}" (Revit's default 3D view name)
-                view3D.Name = "{3D}";
+                view3D.Name = "3D";
 
                 t.Commit();
             }
