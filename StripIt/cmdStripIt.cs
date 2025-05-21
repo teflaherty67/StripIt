@@ -14,38 +14,50 @@ namespace StripIt
             UIDocument uidoc = uiapp.ActiveUIDocument;
             Document curDoc = uidoc.Document;
 
+            // Step 1: check for the default 3D view
+            FilteredElementCollector collector = new FilteredElementCollector(curDoc);
+            View3D default3DView = collector
+                .OfClass(typeof(View3D))
+                .Cast<View3D>()
+                .FirstOrDefault(v => !v.IsTemplate && v.Name == "{3D}");
+
+            // Step 2: if found, make it the active view
+            if (default3DView != null)
+            {
+                uidoc.ActiveView = default3DView;
+                return Result.Succeeded;
+            }
+
+            // Step 3: if not found, get the 3D view family type
             ViewFamilyType viewFamilyType = new FilteredElementCollector(curDoc)
                 .OfClass(typeof(ViewFamilyType))
                 .Cast<ViewFamilyType>()
                 .FirstOrDefault(vft => vft.ViewFamily == ViewFamily.ThreeDimensional);
 
             if (viewFamilyType == null)
-                throw new InvalidOperationException("No 3D view family type found.");
+            {
+                message = "No ViewFamilyType for 3D views found.";
+                return Result.Failed;
+            }
 
+            // Step 4: create new 3D view
+            using (Transaction tx = new Transaction(curDoc))
+            {
+                tx.Start("Create Default 3D View");
 
+                default3DView = View3D.CreateIsometric(curDoc, viewFamilyType.Id);
+                default3DView.Name = "3D";
 
+                tx.Commit();
+            }
 
+            // Step 5: set active view
+            uidoc.ActiveView = default3DView;
 
-
-
-
-
-            string userName = uiapp.Application.Username;
-
-            // 01. set the active view to Elevation A 3D view
-            View newView;
-
-            if (curDoc.IsWorkshared == true)
-                newView = Utils.GetViewByName(curDoc, "A - " + userName);
-            else
-                newView = Utils.GetViewByName(curDoc, "A");
-
-            uidoc.ActiveView = newView;
-
-            // 02. create list of all sheets
+            // 01. create list of all sheets
             List<ViewSheet> allSheets = Utils.GetAllSheets(curDoc);
 
-            // 03. create view lists
+            // 02. create view lists
 
             // create list of all views
             List<View> allViews = Utils.GetAllViews(curDoc);
@@ -59,24 +71,24 @@ namespace StripIt
             // create the filtered list using the ElementId for comparison
             List<View> viewsToDelete = allViews.Where(view => !viewsToKeepIds.Contains(view.Id)).ToList();
 
-            // 04. create list of all schedules
+            // 03. create list of all schedules
             List<ViewSchedule> allSchedules = Utils.GetAllSchedules(curDoc);
 
-            // 05. get Revit Command Id for Purge
+            // 04. get Revit Command Id for Purge
             RevitCommandId commandId = RevitCommandId.LookupPostableCommandId(PostableCommand.PurgeUnused);
 
-            // 04. create & start transaction
+            // 05. create & start transaction
             using (Transaction t = new Transaction(curDoc))
             {
-                t.Start("Strip the file");
+                t.Start("Strip the file");                
 
-                // 02a. delete all sheets
-                foreach(ViewSheet curSheet in allSheets)
+                // 01a. delete all sheets
+                foreach (ViewSheet curSheet in allSheets)
                 {
                     curDoc.Delete(curSheet.Id);
                 }
 
-                // 03a. loop through the views & delete them
+                // 02a. loop through the views & delete them
                 foreach (View deleteView in viewsToDelete)
                     {
                         try
@@ -89,7 +101,7 @@ namespace StripIt
                         }
                     }
 
-                // 04a. loop through the schedules & delete them
+                // 03a. loop through the schedules & delete them
 
                 foreach (ViewSchedule deleteSched in allSchedules)
                     {
