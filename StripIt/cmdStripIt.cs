@@ -108,7 +108,16 @@ namespace StripIt
                         curDoc.Delete(deleteSched.Id);
                     }
 
-                // run the Purge Unused command using PostCommand
+                // 06. purge unused elements programatically
+                Utils.PurgeUnusedFamilySymbols(curDoc);
+                Utils.PurgeUnusedViewTemplates(curDoc);
+                Utils.PurgeUnusedFilters(curDoc);
+                Utils.PurgeUnusedMaterials(curDoc);
+                Utils.PurgeUnusedLinePatterns(curDoc);
+                Utils.PurgeUnusedFillPatterns(curDoc);
+                Utils.PurgeUnusedGroups(curDoc);
+
+                // 06a. run the Purge Unused command using PostCommand
                 uiapp.PostCommand(commandId);
 
                 t.Commit();
