@@ -178,15 +178,24 @@ namespace StripIt
 
             foreach (var symbol in symbols)
             {
-                if (!symbol.IsActive && !symbol.IsInUse)
-                {
-                    try
+                if (!symbol.IsActive && !SymbolIsInUse(curDoc, symbol))
+
+                    {
+                        try
                     {
                         curDoc.Delete(symbol.Id);
                     }
                     catch { }
                 }
             }
+        }
+
+        private static bool SymbolIsInUse(Document curDoc, FamilySymbol symbol)
+        {
+            return new FilteredElementCollector(curDoc)
+                .OfClass(typeof(FamilyInstance))
+                .WhereElementIsNotElementType()
+                .Any(e => e.GetTypeId() == symbol.Id);
         }
 
         internal static void PurgeUnusedViewTemplates(Document curDoc)
@@ -285,15 +294,23 @@ namespace StripIt
             var allPatterns = new FilteredElementCollector(curDoc)
             .OfClass(typeof(LinePatternElement))
             .Cast<LinePatternElement>()
-            .Where(lpe => !lpe.IsBuiltInPattern);
+            .Where(lpe => !lpe.Name.StartsWith("<"));
 
             var usedPatternIds = new HashSet<ElementId>();
 
             Category linesCategory = curDoc.Settings.Categories.get_Item(BuiltInCategory.OST_Lines);
             foreach (Category subcat in linesCategory.SubCategories)
             {
-                if (subcat != null && subcat.LinePatternId != ElementId.InvalidElementId)
-                    usedPatternIds.Add(subcat.LinePatternId);
+                GraphicsStyle gs = curDoc.GetElement(subcat.Id) as GraphicsStyle;
+                if (gs != null)
+                {
+                    OverrideGraphicSettings ogs = curDoc.GetElement(gs.Id).GetType() == typeof(GraphicsStyle)
+                        ? curDoc.ActiveView.GetCategoryOverrides(gs.GraphicsStyleCategory.Id)
+                        : null;
+
+                    if (ogs != null && ogs.ProjectionLinePatternId != ElementId.InvalidElementId)
+                        usedPatternIds.Add(ogs.ProjectionLinePatternId);
+                }
             }
 
             foreach (var pattern in allPatterns)
@@ -311,28 +328,39 @@ namespace StripIt
 
         internal static void PurgeUnusedFillPatterns(Document curDoc)
         {
-            var allPatterns = new FilteredElementCollector(curDoc)
-            .OfClass(typeof(FillPatternElement))
-            .Cast<FillPatternElement>();
+            var patterns = new FilteredElementCollector(curDoc)
+        .OfClass(typeof(FillPatternElement))
+        .Cast<FillPatternElement>();
 
             var usedPatternIds = new HashSet<ElementId>();
 
-            foreach (Category cat in curDoc.Settings.Categories)
+            // Heuristic approach: try to gather fill patterns from view overrides
+            var views = new FilteredElementCollector(curDoc)
+                .OfClass(typeof(View))
+                .Cast<View>()
+                .Where(v => !v.IsTemplate);
+
+            foreach (var view in views)
             {
-                if (cat == null) continue;
+                var elements = new FilteredElementCollector(curDoc, view.Id)
+                    .WhereElementIsNotElementType()
+                    .ToElements();
 
-                if (!cat.CutPatternId.Equals(ElementId.InvalidElementId))
-                    usedPatternIds.Add(cat.CutPatternId);
-
-                if (!cat.MaterialId.Equals(ElementId.InvalidElementId))
+                foreach (var elem in elements)
                 {
-                    var mat = curDoc.GetElement(cat.MaterialId) as Material;
-                    if (mat != null && mat.SurfacePatternId != ElementId.InvalidElementId)
-                        usedPatternIds.Add(mat.SurfacePatternId);
+                    OverrideGraphicSettings ogs = view.GetElementOverrides(elem.Id);
+                    if (ogs != null)
+                    {
+                        if (ogs.SurfaceForegroundPatternId != ElementId.InvalidElementId)
+                            usedPatternIds.Add(ogs.SurfaceForegroundPatternId);
+
+                        if (ogs.CutForegroundPatternId != ElementId.InvalidElementId)
+                            usedPatternIds.Add(ogs.CutForegroundPatternId);
+                    }
                 }
             }
 
-            foreach (var pattern in allPatterns)
+            foreach (var pattern in patterns)
             {
                 if (!usedPatternIds.Contains(pattern.Id))
                 {
