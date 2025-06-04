@@ -183,9 +183,10 @@ namespace StripIt
 
         internal static void PurgeUnusedFamilySymbols(Document curDoc)
         {
-            var symbols = new FilteredElementCollector(curDoc)
-            .OfClass(typeof(FamilySymbol))
-            .Cast<FamilySymbol>();
+            List<FamilySymbol> symbols = new FilteredElementCollector(curDoc)
+                .OfClass(typeof(FamilySymbol))
+                .Cast<FamilySymbol>()
+                .ToList<FamilySymbol>();
 
             foreach (var symbol in symbols)
             {
@@ -211,10 +212,11 @@ namespace StripIt
 
         internal static void PurgeUnusedViewTemplates(Document curDoc)
         {
-            var templates = new FilteredElementCollector(curDoc)
+            List<View> templates = new FilteredElementCollector(curDoc)
             .OfClass(typeof(View))
             .Cast<View>()
-            .Where(v => v.IsTemplate);
+            .Where(v => v.IsTemplate)
+            .ToList<View>();
 
             var usedTemplateIds = new FilteredElementCollector(curDoc)
                 .OfClass(typeof(View))
@@ -238,9 +240,10 @@ namespace StripIt
 
         internal static void PurgeUnusedFilters(Document curDoc)
         {
-            var filters = new FilteredElementCollector(curDoc)
+            List<ParameterFilterElement> filters = new FilteredElementCollector(curDoc)
             .OfClass(typeof(ParameterFilterElement))
-            .Cast<ParameterFilterElement>();
+            .Cast<ParameterFilterElement>()
+            .ToList<ParameterFilterElement>();
 
             var views = new FilteredElementCollector(curDoc)
                 .OfClass(typeof(View))

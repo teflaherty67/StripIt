@@ -111,10 +111,10 @@ namespace StripIt
                 // 06. purged unused elements programatically
                 Utils.PurgeUnusedFamilySymbols(curDoc);
                 Utils.PurgeUnusedViewTemplates(curDoc);
-                Utils.PurgeUnusedFilters(curDoc);
+                //Utils.PurgeUnusedFilters(curDoc);
                 Utils.PurgeUnusedMaterials(curDoc);
-                Utils.PurgeUnusedLinePatterns(curDoc);
-                Utils.PurgeUnusedFillPatterns(curDoc);
+                //Utils.PurgeUnusedLinePatterns(curDoc);
+                //Utils.PurgeUnusedFillPatterns(curDoc);
                 Utils.PurgeUnusedGroups(curDoc);
 
                 // 06a. run the Purge Unused command using PostCommand
