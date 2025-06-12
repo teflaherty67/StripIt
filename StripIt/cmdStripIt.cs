@@ -117,11 +117,12 @@ namespace StripIt
                 //Utils.PurgeUnusedFillPatterns(curDoc);
                 Utils.PurgeUnusedGroups(curDoc);
 
-                // 06a. run the Purge Unused command using PostCommand
-                uiapp.PostCommand(commandId);
 
                 t.Commit();
             }
+
+                // 06a. run the Purge Unused command using PostCommand
+                uiapp.PostCommand(commandId);
 
             return Result.Succeeded;
         }
