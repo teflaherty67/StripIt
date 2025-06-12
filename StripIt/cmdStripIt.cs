@@ -104,18 +104,9 @@ namespace StripIt
                 // 03a. loop through the schedules & delete them
 
                 //foreach (ViewSchedule deleteSched in allSchedules)
-                //    {
-                //        curDoc.Delete(deleteSched.Id);
-                //    }
-
-                // 06. purge unused elements programatically
-                //Utils.PurgeUnusedFamilySymbols(curDoc);
-                //Utils.PurgeUnusedViewTemplates(curDoc);
-                //Utils.PurgeUnusedFilters(curDoc);
-                //Utils.PurgeUnusedMaterials(curDoc);
-                //Utils.PurgeUnusedLinePatterns(curDoc);
-                //Utils.PurgeUnusedFillPatterns(curDoc);
-                //Utils.PurgeUnusedGroups(curDoc);
+                //{
+                //    curDoc.Delete(deleteSched.Id);
+                //}
 
                 // 06. purged unused elements programatically
                 Utils.PurgeUnusedFamilySymbols(curDoc);
