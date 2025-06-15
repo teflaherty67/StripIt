@@ -112,14 +112,43 @@ namespace StripIt
                 Utils.PurgeUnusedFilters(curDoc);
                 Utils.PurgeUnusedMaterials(curDoc);
                 Utils.PurgeUnusedLinePatterns(curDoc);
-                //Utils.PurgeUnusedFillPatterns(curDoc);
-                //Utils.PurgeUnusedGroups(curDoc);
+                Utils.PurgeUnusedFillPatterns(curDoc);
+                Utils.PurgeUnusedGroups(curDoc);
+                Utils.PurgeUnusedTextStyles(curDoc);
+                Utils.PurgeUnusedDimensionStyles(curDoc);
+                Utils.PurgeUnusedLineStyles(curDoc);
+                Utils.PurgeUnusedAnnotationSymbols(curDoc);
+                Utils.PurgeUnusedLoadedFamilies(curDoc);
+                Utils.PurgeUnusedAppearanceAssets(curDoc);
+                Utils.PurgeUnusedRenderingMaterials(curDoc);
 
                 t.Commit();
             }
 
             // 07. save file to Luis' folder
             Utils.SaveToLuisFolder(curDoc);
+
+            // 08. switch to Manage ribbon tab before running Purge command
+            try
+            {
+                // Get the ribbon control
+                Autodesk.Windows.RibbonControl ribbon = Autodesk.Windows.ComponentManager.Ribbon;
+
+                // Find and activate the Manage tab
+                foreach (Autodesk.Windows.RibbonTab tab in ribbon.Tabs)
+                {
+                    if (tab.Id == "Manage" || tab.Title == "Manage")
+                    {
+                        tab.IsActive = true;
+                        break;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error but don't fail the command
+                System.Diagnostics.Debug.WriteLine($"Failed to switch to Manage ribbon: {ex.Message}");
+            }
 
             // 06a. run the Purge Unused command using PostCommand
             uiapp.PostCommand(commandId);

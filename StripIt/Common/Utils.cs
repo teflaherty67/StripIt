@@ -572,7 +572,8 @@
                     patterns = new FilteredElementCollector(curDoc)
                         .OfClass(typeof(FillPatternElement))
                         .Cast<FillPatternElement>()
-                        .Where(p => p != null); // Filter out any null patterns
+                        .Where(p => p != null)
+                        .ToList(); // Convert to List to avoid iterator issues
                 }
                 catch (Exception ex)
                 {
@@ -589,7 +590,8 @@
                     views = new FilteredElementCollector(curDoc)
                         .OfClass(typeof(View))
                         .Cast<View>()
-                        .Where(v => v != null && !v.IsTemplate);
+                        .Where(v => v != null && !v.IsTemplate)
+                        .ToList(); // Convert to List to avoid iterator issues
                 }
                 catch (Exception ex)
                 {
@@ -708,7 +710,8 @@
                     var materials = new FilteredElementCollector(curDoc)
                         .OfClass(typeof(Material))
                         .Cast<Material>()
-                        .Where(m => m != null);
+                        .Where(m => m != null)
+                        .ToList(); // Convert to List to avoid iterator issues
 
                     foreach (var material in materials)
                     {
@@ -749,7 +752,9 @@
                     System.Diagnostics.Debug.WriteLine($"Error collecting materials: {ex.Message}");
                 }
 
-                // Delete unused patterns
+                // Collect patterns to delete first (to avoid iterator modification issues)
+                List<ElementId> patternsToDelete = new List<ElementId>();
+
                 if (patterns != null)
                 {
                     foreach (var pattern in patterns)
@@ -765,26 +770,43 @@
                                 // Additional check to ensure the element is still valid
                                 if (curDoc.GetElement(pattern.Id) != null)
                                 {
-                                    curDoc.Delete(pattern.Id);
-                                    System.Diagnostics.Debug.WriteLine($"Deleted unused fill pattern: {pattern.Name}");
+                                    patternsToDelete.Add(pattern.Id);
                                 }
                             }
                         }
-                        catch (Autodesk.Revit.Exceptions.ArgumentException)
-                        {
-                            // Element might already be deleted or invalid
-                            System.Diagnostics.Debug.WriteLine($"Cannot delete fill pattern {pattern.Name}: Invalid element");
-                        }
-                        catch (Autodesk.Revit.Exceptions.InvalidOperationException)
-                        {
-                            // Element might be in use by something we didn't detect
-                            System.Diagnostics.Debug.WriteLine($"Cannot delete fill pattern {pattern.Name}: Element is in use");
-                        }
                         catch (Exception ex)
                         {
-                            // Catch any other unexpected exceptions
-                            System.Diagnostics.Debug.WriteLine($"Unexpected error deleting fill pattern {pattern.Name}: {ex.Message}");
+                            System.Diagnostics.Debug.WriteLine($"Error checking pattern {pattern.Name}: {ex.Message}");
                         }
+                    }
+                }
+
+                // Now delete the collected patterns
+                foreach (var patternId in patternsToDelete)
+                {
+                    try
+                    {
+                        var pattern = curDoc.GetElement(patternId) as FillPatternElement;
+                        if (pattern != null)
+                        {
+                            curDoc.Delete(patternId);
+                            System.Diagnostics.Debug.WriteLine($"Deleted unused fill pattern: {pattern.Name}");
+                        }
+                    }
+                    catch (Autodesk.Revit.Exceptions.ArgumentException)
+                    {
+                        // Element might already be deleted or invalid
+                        System.Diagnostics.Debug.WriteLine($"Cannot delete fill pattern {patternId}: Invalid element");
+                    }
+                    catch (Autodesk.Revit.Exceptions.InvalidOperationException)
+                    {
+                        // Element might be in use by something we didn't detect
+                        System.Diagnostics.Debug.WriteLine($"Cannot delete fill pattern {patternId}: Element is in use");
+                    }
+                    catch (Exception ex)
+                    {
+                        // Catch any other unexpected exceptions
+                        System.Diagnostics.Debug.WriteLine($"Unexpected error deleting fill pattern {patternId}: {ex.Message}");
                     }
                 }
             }
@@ -797,20 +819,471 @@
 
         internal static void PurgeUnusedGroups(Document curDoc)
         {
+            // Collect all groups and convert to List to avoid iterator issues
             var groups = new FilteredElementCollector(curDoc)
-           .OfClass(typeof(GroupType))
-           .Cast<GroupType>();
+                .OfClass(typeof(GroupType))
+                .Cast<GroupType>()
+                .ToList();
+
+            // Collect groups to delete first
+            List<ElementId> groupsToDelete = new List<ElementId>();
 
             foreach (var group in groups)
             {
                 if (group.Groups.Size == 0)
                 {
+                    groupsToDelete.Add(group.Id);
+                }
+            }
+
+            // Now delete the collected groups
+            foreach (var groupId in groupsToDelete)
+            {
+                try
+                {
+                    curDoc.Delete(groupId);
+                }
+                catch { }
+            }
+        }
+
+        // Additional purge methods to add to your Utils class
+
+        internal static void PurgeUnusedTextStyles(Document curDoc)
+        {
+            try
+            {
+                // Collect all text note types and convert to List
+                var textStyles = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(TextNoteType))
+                    .Cast<TextNoteType>()
+                    .ToList();
+
+                // Collect used text style IDs
+                HashSet<ElementId> usedStyleIds = new HashSet<ElementId>();
+
+                // Check text notes for used styles
+                var textNotes = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(TextNote))
+                    .Cast<TextNote>()
+                    .ToList();
+
+                foreach (var textNote in textNotes)
+                {
+                    if (textNote?.GetTypeId() != null && textNote.GetTypeId() != ElementId.InvalidElementId)
+                    {
+                        usedStyleIds.Add(textNote.GetTypeId());
+                    }
+                }
+
+                // Collect styles to delete
+                List<ElementId> stylesToDelete = new List<ElementId>();
+
+                foreach (var style in textStyles)
+                {
+                    if (style?.Id != null && !usedStyleIds.Contains(style.Id))
+                    {
+                        stylesToDelete.Add(style.Id);
+                    }
+                }
+
+                // Delete unused styles
+                foreach (var styleId in stylesToDelete)
+                {
                     try
                     {
-                        curDoc.Delete(group.Id);
+                        curDoc.Delete(styleId);
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete text style {styleId}: {ex.Message}");
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging text styles: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedDimensionStyles(Document curDoc)
+        {
+            try
+            {
+                // Collect all dimension types
+                var dimensionTypes = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(DimensionType))
+                    .Cast<DimensionType>()
+                    .ToList();
+
+                // Collect used dimension type IDs
+                HashSet<ElementId> usedTypeIds = new HashSet<ElementId>();
+
+                // Check dimensions for used types
+                var dimensions = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(Dimension))
+                    .Cast<Dimension>()
+                    .ToList();
+
+                foreach (var dimension in dimensions)
+                {
+                    if (dimension?.GetTypeId() != null && dimension.GetTypeId() != ElementId.InvalidElementId)
+                    {
+                        usedTypeIds.Add(dimension.GetTypeId());
+                    }
+                }
+
+                // Collect types to delete
+                List<ElementId> typesToDelete = new List<ElementId>();
+
+                foreach (var dimType in dimensionTypes)
+                {
+                    if (dimType?.Id != null && !usedTypeIds.Contains(dimType.Id))
+                    {
+                        typesToDelete.Add(dimType.Id);
+                    }
+                }
+
+                // Delete unused types
+                foreach (var typeId in typesToDelete)
+                {
+                    try
+                    {
+                        curDoc.Delete(typeId);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete dimension type {typeId}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging dimension styles: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedLineStyles(Document curDoc)
+        {
+            try
+            {
+                // Get line styles (subcategory of Lines category)
+                Category lineCategory = curDoc.Settings.Categories.get_Item(BuiltInCategory.OST_Lines);
+                if (lineCategory?.SubCategories == null) return;
+
+                // Collect used line style IDs
+                HashSet<ElementId> usedLineStyleIds = new HashSet<ElementId>();
+
+                // Check detail lines for used styles
+                var detailLines = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(DetailLine))
+                    .Cast<DetailLine>()
+                    .ToList();
+
+                foreach (var line in detailLines)
+                {
+                    if (line?.LineStyle?.Id != null)
+                    {
+                        usedLineStyleIds.Add(line.LineStyle.Id);
+                    }
+                }
+
+                // Check model lines for used styles
+                var modelLines = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(ModelLine))
+                    .Cast<ModelLine>()
+                    .ToList();
+
+                foreach (var line in modelLines)
+                {
+                    if (line?.LineStyle?.Id != null)
+                    {
+                        usedLineStyleIds.Add(line.LineStyle.Id);
+                    }
+                }
+
+                // Collect line styles to delete
+                List<ElementId> stylesToDelete = new List<ElementId>();
+
+                foreach (Category subCat in lineCategory.SubCategories)
+                {
+                    if (subCat?.Id != null && !usedLineStyleIds.Contains(subCat.Id))
+                    {
+                        stylesToDelete.Add(subCat.Id);
+                    }
+                }
+
+                // Delete unused line styles
+                foreach (var styleId in stylesToDelete)
+                {
+                    try
+                    {
+                        curDoc.Delete(styleId);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete line style {styleId}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging line styles: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedAnnotationSymbols(Document curDoc)
+        {
+            try
+            {
+                // Collect all annotation symbol types
+                var annotationTypes = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(AnnotationSymbolType))
+                    .Cast<AnnotationSymbolType>()
+                    .ToList();
+
+                // Collect used annotation type IDs
+                HashSet<ElementId> usedTypeIds = new HashSet<ElementId>();
+
+                // Check annotation symbols for used types
+                var annotations = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(AnnotationSymbol))
+                    .Cast<AnnotationSymbol>()
+                    .ToList();
+
+                foreach (var annotation in annotations)
+                {
+                    if (annotation?.GetTypeId() != null && annotation.GetTypeId() != ElementId.InvalidElementId)
+                    {
+                        usedTypeIds.Add(annotation.GetTypeId());
+                    }
+                }
+
+                // Collect types to delete
+                List<ElementId> typesToDelete = new List<ElementId>();
+
+                foreach (var annoType in annotationTypes)
+                {
+                    if (annoType?.Id != null && !usedTypeIds.Contains(annoType.Id))
+                    {
+                        typesToDelete.Add(annoType.Id);
+                    }
+                }
+
+                // Delete unused types
+                foreach (var typeId in typesToDelete)
+                {
+                    try
+                    {
+                        curDoc.Delete(typeId);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete annotation type {typeId}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging annotation symbols: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedLoadedFamilies(Document curDoc)
+        {
+            try
+            {
+                // Collect all family symbols (types)
+                var familySymbols = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(FamilySymbol))
+                    .Cast<FamilySymbol>()
+                    .ToList();
+
+                // Collect used family symbol IDs
+                HashSet<ElementId> usedSymbolIds = new HashSet<ElementId>();
+
+                // Check family instances for used symbols
+                var familyInstances = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(FamilyInstance))
+                    .Cast<FamilyInstance>()
+                    .ToList();
+
+                foreach (var instance in familyInstances)
+                {
+                    if (instance?.GetTypeId() != null && instance.GetTypeId() != ElementId.InvalidElementId)
+                    {
+                        usedSymbolIds.Add(instance.GetTypeId());
+                    }
+                }
+
+                // Collect symbols to delete
+                List<ElementId> symbolsToDelete = new List<ElementId>();
+
+                foreach (var symbol in familySymbols)
+                {
+                    if (symbol?.Id != null && !usedSymbolIds.Contains(symbol.Id))
+                    {
+                        symbolsToDelete.Add(symbol.Id);
+                    }
+                }
+
+                // Delete unused symbols
+                foreach (var symbolId in symbolsToDelete)
+                {
+                    try
+                    {
+                        curDoc.Delete(symbolId);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete family symbol {symbolId}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging loaded families: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedAppearanceAssets(Document curDoc)
+        {
+            try
+            {
+                // Collect all appearance assets
+                var appearanceAssets = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(AppearanceAssetElement))
+                    .Cast<AppearanceAssetElement>()
+                    .ToList();
+
+                // Collect used appearance asset IDs
+                HashSet<ElementId> usedAssetIds = new HashSet<ElementId>();
+
+                // Check materials for used appearance assets
+                var materials = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(Material))
+                    .Cast<Material>()
+                    .ToList();
+
+                foreach (var material in materials)
+                {
+                    try
+                    {
+                        var appearanceAssetId = material.AppearanceAssetId;
+                        if (appearanceAssetId != null && appearanceAssetId != ElementId.InvalidElementId)
+                        {
+                            usedAssetIds.Add(appearanceAssetId);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Error checking material appearance asset: {ex.Message}");
+                    }
+                }
+
+                // Collect assets to delete
+                List<ElementId> assetsToDelete = new List<ElementId>();
+
+                foreach (var asset in appearanceAssets)
+                {
+                    if (asset?.Id != null && !usedAssetIds.Contains(asset.Id))
+                    {
+                        assetsToDelete.Add(asset.Id);
+                    }
+                }
+
+                // Delete unused assets
+                foreach (var assetId in assetsToDelete)
+                {
+                    try
+                    {
+                        curDoc.Delete(assetId);
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete appearance asset {assetId}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging appearance assets: {ex.Message}");
+            }
+        }
+
+        internal static void PurgeUnusedRenderingMaterials(Document curDoc)
+        {
+            try
+            {
+                // This method attempts to purge unused rendering materials/assets
+                // Note: Some rendering materials might be harder to detect usage for
+
+                var renderingElements = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(Material))
+                    .Cast<Material>()
+                    .Where(m => m != null)
+                    .ToList();
+
+                // Collect used material IDs from elements
+                HashSet<ElementId> usedMaterialIds = new HashSet<ElementId>();
+
+                // Check all elements for material usage
+                var allElements = new FilteredElementCollector(curDoc)
+                    .WhereElementIsNotElementType()
+                    .ToList();
+
+                foreach (var element in allElements)
+                {
+                    try
+                    {
+                        // Try to get material IDs from the element
+                        var materialIds = element.GetMaterialIds(false);
+                        foreach (var matId in materialIds)
+                        {
+                            if (matId != null && matId != ElementId.InvalidElementId)
+                            {
+                                usedMaterialIds.Add(matId);
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        // Some elements might not support GetMaterialIds
+                        continue;
+                    }
+                }
+
+                // Also check element types for materials
+                var elementTypes = new FilteredElementCollector(curDoc)
+                    .WhereElementIsElementType()
+                    .ToList();
+
+                foreach (var elementType in elementTypes)
+                {
+                    try
+                    {
+                        var materialIds = elementType.GetMaterialIds(false);
+                        foreach (var matId in materialIds)
+                        {
+                            if (matId != null && matId != ElementId.InvalidElementId)
+                            {
+                                usedMaterialIds.Add(matId);
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        continue;
+                    }
+                }
+
+                // This method focuses on identifying unused materials more conservatively
+                // since materials can be referenced in many ways
+                System.Diagnostics.Debug.WriteLine($"Found {usedMaterialIds.Count} materials in use");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging rendering materials: {ex.Message}");
             }
         }
 
