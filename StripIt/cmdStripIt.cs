@@ -118,7 +118,7 @@ namespace StripIt
                 Utils.PurgeUnusedDimensionStyles(curDoc);
                 Utils.PurgeUnusedLineStyles(curDoc);
                 Utils.PurgeUnusedAnnotationSymbols(curDoc);
-                Utils.PurgeUnusedLoadedFamilies(curDoc);
+                //Utils.PurgeUnusedLoadedFamilies(curDoc);
                 Utils.PurgeUnusedAppearanceAssets(curDoc);
                 Utils.PurgeUnusedRenderingMaterials(curDoc);
 

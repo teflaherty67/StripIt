@@ -176,42 +176,49 @@
             return "";
         }
 
-        // REDUNDANCY ANALYSIS AND OPTIMIZED PURGE METHODS
-
-        // REDUNDANT METHODS - REMOVE THESE:
-        // - PurgeUnusedLoadedFamilies() - Same as PurgeUnusedFamilySymbols()
-        // - PurgeUnusedRenderingMaterials() - Incomplete and overlaps with PurgeUnusedMaterials()
-
-        // OPTIMIZED METHODS:
+        #region Purge
 
         internal static void PurgeUnusedFamilySymbols(Document curDoc)
         {
-            List<FamilySymbol> symbols = new FilteredElementCollector(curDoc)
-                .OfClass(typeof(FamilySymbol))
-                .Cast<FamilySymbol>()
-                .ToList<FamilySymbol>();
-
-            foreach (var symbol in symbols)
+            try
             {
-                if (!symbol.IsActive && !SymbolIsInUse(curDoc, symbol))
+                // Collect all family symbols
+                var allSymbols = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(FamilySymbol))
+                    .Cast<FamilySymbol>()
+                    .ToList();
 
+                // Collect used symbol IDs from family instances
+                var usedSymbolIds = new FilteredElementCollector(curDoc)
+                    .OfClass(typeof(FamilyInstance))
+                    .Cast<FamilyInstance>()
+                    .Select(fi => fi.GetTypeId())
+                    .Where(id => id != ElementId.InvalidElementId)
+                    .ToHashSet();
+
+                // Delete unused symbols
+                var symbolsToDelete = allSymbols
+                    .Where(s => !s.IsActive && !usedSymbolIds.Contains(s.Id))
+                    .Select(s => s.Id)
+                    .ToList();
+
+                foreach (var symbolId in symbolsToDelete)
                 {
                     try
                     {
-                        curDoc.Delete(symbol.Id);
+                        curDoc.Delete(symbolId);
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Could not delete family symbol {symbolId}: {ex.Message}");
+                    }
                 }
             }
-        }
-
-        private static bool SymbolIsInUse(Document curDoc, FamilySymbol symbol)
-        {
-            return new FilteredElementCollector(curDoc)
-                .OfClass(typeof(FamilyInstance))
-                .WhereElementIsNotElementType()
-                .Any(e => e.GetTypeId() == symbol.Id);
-        }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error purging family symbols: {ex.Message}");
+            }
+        }       
 
         internal static void PurgeUnusedViewTemplates(Document curDoc)
         {
@@ -1295,6 +1302,8 @@
             }
         }
 
+        #endregion
+
         internal static bool SaveToLuisFolder(Document doc, string fileName = null)
         {
             try
@@ -1310,9 +1319,9 @@
                     // Extract plan name and region code (remove lot dimensions and anything after)
                     // Example: "Torres(R)-CTX(50-5-29'11)" should become "Torres(R)-CTX"
 
-                    // Find the pattern: look for the last hyphen followed by letters, then a parenthesis
+                    // Find the pattern: look for the first hyphen followed by letters, then a parenthesis
                     // This should identify the region code section
-                    int regionCodeStart = -1;
+                    // int regionCodeStart = -1;
                     for (int i = originalName.Length - 1; i >= 0; i--)
                     {
                         if (originalName[i] == '-')
