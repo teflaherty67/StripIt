@@ -21,7 +21,7 @@
             string buttonInternalName = "btnCommand2";
             string buttonTitle = "Button 2";
 
-            Common.ButtonDataClass myButtonData = new Common.ButtonDataClass(
+            Common.clsButtonData myButtonData = new Common.clsButtonData(
                 buttonInternalName,
                 buttonTitle,
                 MethodBase.GetCurrentMethod().DeclaringType?.FullName,
