@@ -4,7 +4,7 @@
     <Text>StripIt - Command 1</Text>
     <Description>Some description</Description>
     <Assembly>StripIt\StripIt.dll</Assembly>
-    <FullClassName>StripIt.Command1</FullClassName>
+    <FullClassName>StripIt.cmdStripIt</FullClassName>
     <ClientId>d5786dd4-44a4-4504-85f3-d8c03e631425</ClientId>
     <VendorId>com.YOUR COMPANY NAME</VendorId>
     <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
