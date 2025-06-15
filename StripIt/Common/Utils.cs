@@ -176,6 +176,14 @@
             return "";
         }
 
+        // REDUNDANCY ANALYSIS AND OPTIMIZED PURGE METHODS
+
+        // REDUNDANT METHODS - REMOVE THESE:
+        // - PurgeUnusedLoadedFamilies() - Same as PurgeUnusedFamilySymbols()
+        // - PurgeUnusedRenderingMaterials() - Incomplete and overlaps with PurgeUnusedMaterials()
+
+        // OPTIMIZED METHODS:
+
         internal static void PurgeUnusedFamilySymbols(Document curDoc)
         {
             List<FamilySymbol> symbols = new FilteredElementCollector(curDoc)
