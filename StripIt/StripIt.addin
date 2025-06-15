@@ -1,0 +1,29 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Command">
+    <Text>StripIt - Command 1</Text>
+    <Description>Some description</Description>
+    <Assembly>StripIt\StripIt.dll</Assembly>
+    <FullClassName>StripIt.Command1</FullClassName>
+    <ClientId>d5786dd4-44a4-4504-85f3-d8c03e631425</ClientId>
+    <VendorId>com.YOUR COMPANY NAME</VendorId>
+    <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
+  </AddIn>
+  <AddIn Type="Command">
+    <Text>StripIt - Command 2</Text>
+    <Description>Some description</Description>
+    <Assembly>StripIt\StripIt.dll</Assembly>
+    <FullClassName>StripIt.Command2</FullClassName>
+    <ClientId>736a3480-9373-471a-8024-e39e168c5acc</ClientId>
+    <VendorId>com.YOUR COMPANY NAME</VendorId>
+    <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
+  </AddIn>
+  <AddIn Type="Application">
+    <Name>StripIt</Name>
+    <Assembly>StripIt\StripIt.dll</Assembly>
+    <FullClassName>StripIt.App</FullClassName>
+    <ClientId>13fc28cc-04a8-4168-9351-aaf40756f32f</ClientId>
+    <VendorId>com.YOUR COMPANY NAME</VendorId>
+    <VendorDescription>YOUR COMPANY NAME, YOUR COMPANY URL</VendorDescription>
+  </AddIn>
+</RevitAddIns>
