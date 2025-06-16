@@ -1,0 +1,65 @@
+﻿<Window x:Class="StripIt.frmBugReport"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:StripIt"
+        mc:Ignorable="d"
+        Title="Bug Report" Height="450" Width="500">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- Command Name Section -->
+        <Label Grid.Row="0" 
+               Content="Command Name:" 
+               FontWeight="Bold" 
+               Margin="0,0,0,5"/>
+
+        <TextBox Grid.Row="1" 
+                 Name="CommandNameTextBox"
+                 Height="25" 
+                 Margin="0,0,0,15"
+                 VerticalContentAlignment="Center"/>
+
+        <!-- Error Description Section -->
+        <Label Grid.Row="2" 
+               Content="Error Description:" 
+               FontWeight="Bold" 
+               Margin="0,0,0,5"/>
+
+        <TextBox Grid.Row="3" 
+                 Name="DescriptionTextBox"
+                 Margin="0,0,0,20"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="True"
+                 AcceptsTab="True"
+                 VerticalScrollBarVisibility="Auto"
+                 HorizontalScrollBarVisibility="Auto"
+                 VerticalContentAlignment="Top"
+                 Padding="5"/>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="4" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button Name="SendButton" 
+                    Content="Send Report" 
+                    Width="100" 
+                    Height="35" 
+                    Margin="0,0,10,0"
+                    Click="SendButton_Click"
+                    IsDefault="True"/>
+            <Button Name="CancelButton" 
+                    Content="Cancel" 
+                    Width="80" 
+                    Height="35"
+                    Click="CancelButton_Click"
+                    IsCancel="True"/>
+        </StackPanel>
+    </Grid>
+</Window>
