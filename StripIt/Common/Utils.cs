@@ -860,9 +860,7 @@
                 }
                 catch { }
             }
-        }
-
-        // Additional purge methods to add to your Utils class
+        }        
 
         internal static void PurgeUnusedTextStyles(Document curDoc)
         {
@@ -1102,64 +1100,7 @@
             {
                 System.Diagnostics.Debug.WriteLine($"Error purging annotation symbols: {ex.Message}");
             }
-        }
-
-        internal static void PurgeUnusedLoadedFamilies(Document curDoc)
-        {
-            try
-            {
-                // Collect all family symbols (types)
-                var familySymbols = new FilteredElementCollector(curDoc)
-                    .OfClass(typeof(FamilySymbol))
-                    .Cast<FamilySymbol>()
-                    .ToList();
-
-                // Collect used family symbol IDs
-                HashSet<ElementId> usedSymbolIds = new HashSet<ElementId>();
-
-                // Check family instances for used symbols
-                var familyInstances = new FilteredElementCollector(curDoc)
-                    .OfClass(typeof(FamilyInstance))
-                    .Cast<FamilyInstance>()
-                    .ToList();
-
-                foreach (var instance in familyInstances)
-                {
-                    if (instance?.GetTypeId() != null && instance.GetTypeId() != ElementId.InvalidElementId)
-                    {
-                        usedSymbolIds.Add(instance.GetTypeId());
-                    }
-                }
-
-                // Collect symbols to delete
-                List<ElementId> symbolsToDelete = new List<ElementId>();
-
-                foreach (var symbol in familySymbols)
-                {
-                    if (symbol?.Id != null && !usedSymbolIds.Contains(symbol.Id))
-                    {
-                        symbolsToDelete.Add(symbol.Id);
-                    }
-                }
-
-                // Delete unused symbols
-                foreach (var symbolId in symbolsToDelete)
-                {
-                    try
-                    {
-                        curDoc.Delete(symbolId);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Could not delete family symbol {symbolId}: {ex.Message}");
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error purging loaded families: {ex.Message}");
-            }
-        }
+        }       
 
         internal static void PurgeUnusedAppearanceAssets(Document curDoc)
         {
